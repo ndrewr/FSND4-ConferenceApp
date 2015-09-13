@@ -1,5 +1,7 @@
 #Full Stack NonoDegree Project 4
 ##Conference Central Sessionized
+### author Andrew Roy Chen
+### last modified 2015 sept 12
 
 ### tech and services
 - [App Engine][1]
@@ -13,17 +15,25 @@ Session implementation:
 I picture User access of Session information in the client from a Conference
 *Details* page.
 I followed the project guidelines to the letter in defining the Sessions model.
-For the Message form object I also added the *websafeConferenceKey*
+For the Message form object I added a property *websafeConferenceKey* to
+easily access specific Conference entities.
 
 
 Speaker implementation:
 
 To represent the session *speaker* I just went with a String. I thought about
-making a specific Entity. However thinking about it from a User point of view,it
+making a specific Entity. Problem is from a User/Session creator point of view,
 introduces the burden of defining additional information on the speaker that the
 conference creator may not now.
-Also it is possible that conference creators may end up creating multiple speaker
-entities for the same person, person with slightly different spelling.
+
+Also it is possible that different conference creators may end up creating
+multiple speaker entities for the same person, perhaps with slightly different
+spellings or other minor differences that ultimately just clog the store.
+
+Separate 'speaker' entities make sense if there is a UI implementation that
+shows existing 'speaker' profiles. Perhaps the UX flow would allow a session
+creator to start typing a name and be presented with already created 'speakers'
+of similar spelling.
 
 
 ###task 2

@@ -24,6 +24,7 @@ class SetAnnouncementHandler(webapp2.RequestHandler):
         ConferenceApi._cacheAnnouncement()
         self.response.set_status(204)
 
+# Task 4: simply calls ConferenceAPI method with parameters
 class SetFeaturedSpeakerHandler(webapp2.RequestHandler):
     def post(self):
         """Set featured speaker in Memcache."""
