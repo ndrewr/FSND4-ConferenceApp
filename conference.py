@@ -102,6 +102,17 @@ SESSION_GET_REQUEST = endpoints.ResourceContainer(
     websafeSessionKey=messages.StringField(1),
 )
 
+SESSION_FORM_REQUEST = endpoints.ResourceContainer(
+    name            = messages.StringField(1),
+    highlights      = messages.StringField(2),
+    websafeConferenceKey   = messages.StringField(3),
+    speaker         = messages.StringField(4),
+    typeOfSession   = messages.StringField(5),
+    date            = messages.StringField(6),
+    startTime       = messages.StringField(7),
+    duration        = messages.IntegerField(8),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -376,11 +387,32 @@ class ConferenceApi(remote.Service):
         return sf
 
 
+    def _verifyConfCreator(self, websafeKey):
+        """helper function to check if conf was created by current user"""
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+        user_id = getUserId(user)
+
+        # check that conference exists
+        conf = ndb.Key(urlsafe=websafeKey).get()
+        if not conf:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeKey)
+
+        # check that user is conference creator
+        if user_id != conf.organizerUserId:
+            raise endpoints.ForbiddenException(
+                'Only the owner can update the conference.')
+
+
+
     # Given a conference, return all sessions
     @endpoints.method(CONF_GET_REQUEST, SessionForms,
             path='sessions/{websafeConferenceKey}',
             http_method='GET', name='getConferenceSessions')
     def getConferenceSessions(self, request):
+        """returns all sessions created under a specified conference key"""
         # convert the websafekey to query for linked Sessions
         conf_key = ndb.Key(urlsafe=request.websafeConferenceKey)
 
@@ -398,6 +430,7 @@ class ConferenceApi(remote.Service):
             http_method='POST',
             name='getConferenceSessionsByType')
     def getConferenceSessionsByType(self, request):
+        """returns sessions given a specified type"""
         conf_key = ndb.Key(urlsafe=request.websafeConferenceKey)
         conf_sessions = Session.query(ancestor=conf_key)
 
@@ -414,6 +447,7 @@ class ConferenceApi(remote.Service):
             http_method='POST',
             name='getSessionsBySpeaker')
     def getSessionsBySpeaker(self, request):
+        """returns sessions given a speaker name"""
         # speaker field is a String
         sessions = Session.query().filter(Session.speaker == request.speaker)
 
@@ -427,6 +461,7 @@ class ConferenceApi(remote.Service):
             http_method='POST',
             name='getShortSessions')
     def getShortSessions(self, request):
+        """returns all sessions less than 60 min in duration"""
         sessions = Session.query(Session.duration < 60)
 
         return SessionForms(items=
@@ -438,6 +473,25 @@ class ConferenceApi(remote.Service):
             http_method='POST', name='createSession')
     def createSession(self, request):
         """Creating new sessions."""
+        # user = endpoints.get_current_user()
+        # if not user:
+        #     raise endpoints.UnauthorizedException('Authorization required')
+        # user_id = getUserId(user)
+        #
+        # # update existing conference
+        # conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
+        # # check that conference exists
+        # if not conf:
+        #     raise endpoints.NotFoundException(
+        #         'No conference found with key: %s' % request.websafeConferenceKey)
+        #
+        # if user_id != conf.organizerUserId:
+        #     raise endpoints.ForbiddenException(
+        #         'Only the owner can update the conference.')
+
+        # # first check that user is conference creator
+        wsck = request.websafeConferenceKey
+        self._verifyConfCreator(wsck)
 
         # copy SessionForm/ProtoRPC Message into dict, omitting websafe key
         data = {field.name: getattr(request, field.name) for field in request.all_fields()}
@@ -453,24 +507,24 @@ class ConferenceApi(remote.Service):
         if data['date']:
             data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
 
-        wsck = request.websafeConferenceKey
         conf_key = ndb.Key(urlsafe=wsck)
         session_id = Session.allocate_ids(size=1, parent=conf_key)[0]
         session_key = ndb.Key(Session, session_id,
                             parent=conf_key)
         data['key'] = session_key
-        # NOTE where is session_id used after??? specify in kwargs???
 
         # check if session speaker has another session in this conference
-        sessions = Session.query(ancestor=ndb.Key(urlsafe=wsck))
-        for sesh in sessions:
-            if sesh.speaker == request.speaker:
-                # Yup, FEATURED SPEAKER! trigger task and end loop
-                taskqueue.add(
-                    url='/tasks/set_featured_speaker',
-                    params={'websafeKey': wsck, 'speaker': request.speaker}
-                )
-                break
+        sessions = Session.query(Session.speaker == request.speaker, ancestor=conf_key).get()
+
+        # for sesh in sessions:
+        if sessions:
+            # if sesh.speaker == request.speaker:
+            # Yup, FEATURED SPEAKER! trigger task and end loop
+            taskqueue.add(
+                url='/tasks/set_featured_speaker',
+                params={'websafeKey': wsck, 'speaker': request.speaker}
+            )
+                # break
 
         # create Session in datastore, passing in kwargs
         Session(**data).put()
@@ -662,8 +716,7 @@ class ConferenceApi(remote.Service):
     @staticmethod
     # def _cacheFeatured(request):
     def _cacheFeatured(websafeKey, speaker):
-        """Designate featured speaker & assign to memcache
-        """
+        """Designate featured speaker & assign to memcache"""
         # get sessions in the conference with that speaker name
         q = Session.query(ancestor=ndb.Key(urlsafe=websafeKey))
         sessions = q.filter(Session.speaker == speaker)
@@ -686,7 +739,7 @@ class ConferenceApi(remote.Service):
             path='conference/featured/get',
             http_method='GET', name='getFeaturedSpeaker')
     def getFeaturedSpeaker(self, request):
-        """Return Announcement from memcache."""
+        """Return featured speaker and related session titles from memcache."""
         return StringMessage(data=memcache.get(MEMCACHE_SPEAKERS_KEY) or
                                 "Nothing to report.")
 
