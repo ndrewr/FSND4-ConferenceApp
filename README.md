@@ -1,4 +1,4 @@
-#Full Stack NonoDegree Project 4
+#Full Stack NanoDegree Project 4
 ##Conference Central Sessionized
 ### author Andrew Roy Chen
 ### last modified 2015 sept 12
@@ -9,6 +9,28 @@
 - [Google Cloud Endpoints][3]
 
 ## project notes
+###source
+built on the Udacity Conference App found [in this repo](https://github.com/udacity/ud858/tree/master/ConferenceCentral_Complete).
+
+###setup and run
+
+1 Update the value of application in app.yaml to the app ID you have registered in the App Engine admin console and would like to use to host your instance of this sample.
+2 Update the values at the top of settings.py to reflect the respective client IDs you have registered in the Developer Console.
+3 Update the value of CLIENT_ID in static/js/app.js to the Web client ID
+4 (Optional) Mark the configuration files as unchanged as follows: $ git update-index --assume-unchanged  app.yaml settings.py static/js/app.js
+5 Run the app with either:
+ - the devserver using dev_appserver.py DIR or,
+ - using the App Engine client
+and ensure it's running by visiting your local server's address (by default localhost:8080.)
+6 (Optional) Generate your client library(ies) with the endpoints tool.
+7 Use endpoints not reachable in the Front-End UI by visiting the project's API explorer
+page, default found at
+```
+localhost:8080/_ah/api/explorer
+```
+8 Deploy your application.
+
+
 ###task 1
 Session implementation:
 
@@ -24,7 +46,7 @@ Speaker implementation:
 To represent the session *speaker* I just went with a String. I thought about
 making a specific Entity. Problem is from a User/Session creator point of view,
 introduces the burden of defining additional information on the speaker that the
-conference creator may not now.
+conference creator may not know.
 
 Also it is possible that different conference creators may end up creating
 multiple speaker entities for the same person, perhaps with slightly different

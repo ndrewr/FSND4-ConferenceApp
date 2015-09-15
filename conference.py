@@ -71,6 +71,7 @@ SESSION_DEFAULTS = {
     "typeOfSession": "Lecture",
     "duration": 30,
     "date": "2015-12-01",
+    "startTime": "10:00"
 }
 
 OPERATORS = {
@@ -379,8 +380,8 @@ class ConferenceApi(remote.Service):
         sf = SessionForm()
         for field in sf.all_fields():
             if hasattr(session, field.name):
-                # convert Date to date string; just copy others
-                if field.name.endswith('date'):
+                # convert Date/time to date string; just copy others
+                if field.name.endswith(('date', 'Time')):
                     setattr(sf, field.name, str(getattr(session, field.name)))
                 else:
                     setattr(sf, field.name, getattr(session, field.name))
@@ -489,9 +490,12 @@ class ConferenceApi(remote.Service):
                 data[df] = SESSION_DEFAULTS[df]
                 setattr(request, df, SESSION_DEFAULTS[df])
 
-        # convert dates from strings to Date objects; set month based on start_date
+        # convert date/time from strings to Datetime objects;
+        # month set based on start_date
         if data['date']:
             data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
+        if data['startTime']:
+            data['startTime'] = datetime.strptime(data['startTime'][:5], "%H:%M").time()
 
         conf_key = ndb.Key(urlsafe=wsck)
         session_id = Session.allocate_ids(size=1, parent=conf_key)[0]
