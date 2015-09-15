@@ -1,7 +1,7 @@
 #Full Stack NanoDegree Project 4
 ##Conference Central Sessionized
 ### author Andrew Roy Chen
-### last modified 2015 sept 12
+### last modified 2015 sept 14
 
 ### tech and services
 - [App Engine][1]
@@ -15,19 +15,26 @@ built on the Udacity Conference App found [in this repo](https://github.com/udac
 ###setup and run
 
 1 Update the value of application in app.yaml to the app ID you have registered in the App Engine admin console and would like to use to host your instance of this sample.
+
 2 Update the values at the top of settings.py to reflect the respective client IDs you have registered in the Developer Console.
+
 3 Update the value of CLIENT_ID in static/js/app.js to the Web client ID
+
 4 (Optional) Mark the configuration files as unchanged as follows: $ git update-index --assume-unchanged  app.yaml settings.py static/js/app.js
+
 5 Run the app with either:
  - the devserver using dev_appserver.py DIR or,
  - using the App Engine client
 and ensure it's running by visiting your local server's address (by default localhost:8080.)
+
 6 (Optional) Generate your client library(ies) with the endpoints tool.
+
 7 Use endpoints not reachable in the Front-End UI by visiting the project's API explorer
 page, default found at
 ```
 localhost:8080/_ah/api/explorer
 ```
+
 8 Deploy your application.
 
 
@@ -120,6 +127,7 @@ The first problem is that datastore allows a max of one inequality filter per
 query. So in the above case, two inquality filters are needed:
    - typeOfSession != "workshop" &&
    - startTime < 7
+
 Where something like:
 ```
    Session.query(typeOfSession != "workshop" && startTime < 7)
@@ -136,7 +144,8 @@ if good_sessions:
     good_sessions = [session for session in good_sessions if session.startTime < cutoff]```
 ```
 The code above will manually filter the non-'Workshop' type sessions with a
-handy list comprehension by comparing datetime.time objects.
+handy list comprehension by comparing datetime.time objects. My concern is perf
+with suitably large data sets.
 
 This solution is implemented as the endpoint *task3Test*.
 
