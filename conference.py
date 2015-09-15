@@ -473,22 +473,6 @@ class ConferenceApi(remote.Service):
             http_method='POST', name='createSession')
     def createSession(self, request):
         """Creating new sessions."""
-        # user = endpoints.get_current_user()
-        # if not user:
-        #     raise endpoints.UnauthorizedException('Authorization required')
-        # user_id = getUserId(user)
-        #
-        # # update existing conference
-        # conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
-        # # check that conference exists
-        # if not conf:
-        #     raise endpoints.NotFoundException(
-        #         'No conference found with key: %s' % request.websafeConferenceKey)
-        #
-        # if user_id != conf.organizerUserId:
-        #     raise endpoints.ForbiddenException(
-        #         'Only the owner can update the conference.')
-
         # # first check that user is conference creator
         wsck = request.websafeConferenceKey
         self._verifyConfCreator(wsck)
@@ -515,16 +499,12 @@ class ConferenceApi(remote.Service):
 
         # check if session speaker has another session in this conference
         sessions = Session.query(Session.speaker == request.speaker, ancestor=conf_key).get()
-
-        # for sesh in sessions:
         if sessions:
-            # if sesh.speaker == request.speaker:
             # Yup, FEATURED SPEAKER! trigger task and end loop
             taskqueue.add(
                 url='/tasks/set_featured_speaker',
                 params={'websafeKey': wsck, 'speaker': request.speaker}
             )
-                # break
 
         # create Session in datastore, passing in kwargs
         Session(**data).put()
