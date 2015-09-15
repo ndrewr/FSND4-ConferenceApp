@@ -14,7 +14,7 @@ modified by andrewR on 2015 sept
 __author__ = 'wesc+api@google.com (Wesley Chun) and haianzu@gmail.com (ARChen)'
 
 
-from datetime import datetime
+from datetime import datetime, time
 
 import endpoints
 from protorpc import messages
@@ -491,7 +491,6 @@ class ConferenceApi(remote.Service):
                 setattr(request, df, SESSION_DEFAULTS[df])
 
         # convert date/time from strings to Datetime objects;
-        # month set based on start_date
         if data['date']:
             data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
         if data['startTime']:
@@ -839,6 +838,24 @@ class ConferenceApi(remote.Service):
         return ConferenceForms(
             items=[self._copyConferenceToForm(conf, "") for conf in q]
         )
+
+
+    # What if User wanted to avoid workshop (type) sessions as well as sessions
+    # after 7pm? What are the issues here and how could this be implemented?
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+            path='task3go',
+            http_method='GET', name='task3Test')
+    def task3Test(self, request):
+        """an endpoint just to test solutions for project's Task 3"""
+        # first query is a simple property filter
+        good_sessions = Session.query(Session.typeOfSession != 'Workshop').fetch()
+        # second query more problematic...how to compare TimeProperties?
+        if good_sessions:
+            cutoff = time(19)
+            good_sessions = [session for session in good_sessions if session.startTime < cutoff]
+
+        return SessionForms(items=
+                    [self._copySessionToForm(session) for session in good_sessions])
 
 
 api = endpoints.api_server([ConferenceApi]) # register API

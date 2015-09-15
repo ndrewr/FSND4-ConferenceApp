@@ -112,10 +112,18 @@ Where something like:
 
 is *not allowed*.
 
-One method to work around the restriction is to chain filter() calls.
+One method to work around the restriction is to combine a property filter for
+session type with some good ol' Python:
 ```
-   Session.query().filter(typeOfSession != "workshop").filter(startTime < 7)
+good_sessions = Session.query(Session.typeOfSession != 'Workshop').fetch()
+if good_sessions:
+    cutoff = time(19)
+    good_sessions = [session for session in good_sessions if session.startTime < cutoff]```
 ```
+The code above will manually filter the non-'Workshop' type sessions with a
+handy list comprehension by comparing datetime.time objects.
+
+This solution is implemented as the endpoint *task3Test*.
 
 
 ###task 4
