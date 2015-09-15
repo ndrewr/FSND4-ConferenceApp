@@ -848,8 +848,16 @@ class ConferenceApi(remote.Service):
     def task3Test(self, request):
         """an endpoint just to test solutions for project's Task 3"""
         # first query is a simple property filter
-        good_sessions = Session.query(Session.typeOfSession != 'Workshop').fetch()
         # second query more problematic...how to compare TimeProperties?
+
+        # this solution did not work; datastore not correctly comparing time obj
+        # good_sessions = Session.query(Session.typeOfSession != 'Workshop')
+        # cutoff = time(19)
+        # print 'HEY cutoff time is %s', cutoff
+        # good_sessions.filter(Session.startTime < cutoff)
+
+        # this solution works but may be problematic performance-wise
+        good_sessions = Session.query(Session.typeOfSession != 'Workshop').fetch()
         if good_sessions:
             cutoff = time(19)
             good_sessions = [session for session in good_sessions if session.startTime < cutoff]

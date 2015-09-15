@@ -32,16 +32,30 @@ localhost:8080/_ah/api/explorer
 
 
 ###task 1
-Session implementation:
+Session implementation and justification of implementation decisions for the
+chosen data types:
 
-I picture User access of Session information in the client from a Conference
-*Details* page.
-I followed the project guidelines to the letter in defining the Sessions model.
+I followed project guidelines to the letter in defining the Sessions model.
 For the Message form object I added a property *websafeConferenceKey* to
 easily access specific Conference entities.
 
+Most of the properties were no-brainer String types and this includes *name*,
+*highlights*, *typeOfSession*. The latter is interesting in that the front-end
+should ideally incorporate a list of accepted values, the same way T-Shirt sizes
+are specified.
 
-Speaker implementation:
+*Date* is, unsurprisingly, a DateProperty translating to a Python datetime
+object.
+
+*StartTime* likewise is implemented as a TimeProperty but this decision has
+interesting ramifications on filtering by this property. In short, perhaps an
+Integer type would be more functional. This is discussed in section **Task 3**.
+
+*Duration* is expressed as an Integer because realistically they will represent
+a specific minute count. This makes comparisons and filtering straightforward.
+
+Finally, we have *speaker*. I picture User access of Session information in the
+client from a Conference *Details* page.
 
 To represent the session *speaker* I just went with a String. I thought about
 making a specific Entity. Problem is from a User/Session creator point of view,
@@ -52,10 +66,11 @@ Also it is possible that different conference creators may end up creating
 multiple speaker entities for the same person, perhaps with slightly different
 spellings or other minor differences that ultimately just clog the store.
 
-Separate 'speaker' entities make sense if there is a UI implementation that
-shows existing 'speaker' profiles. Perhaps the UX flow would allow a session
+Separate 'speaker' entities make more sense if there is a UI implementation that
+shows existing 'speaker' profiles. Perhaps a UX flow would allow a session
 creator to start typing a name and be presented with already created 'speakers'
-of similar spelling.
+of similar spelling. Regardless, though implementation of a Speaker entity would
+be trivial, it did not feel like the best choice given the client.
 
 
 ###task 2
@@ -124,6 +139,16 @@ The code above will manually filter the non-'Workshop' type sessions with a
 handy list comprehension by comparing datetime.time objects.
 
 This solution is implemented as the endpoint *task3Test*.
+
+**Another possible solution** is to save the *startTime* property as an integer val
+(asking the user to enter the time on a 24-hr scale, ,then converting). This
+would make filtering possible. As it is, my efforts to filter by TimeProperty:
+```
+good_sessions.filter(Session.startTime < cutoff)
+```
+did not work correctly. Although datatstore did not complain, the results failed
+to filter correctly. Perhaps datetime objects can not be adequately compared in
+queries?
 
 
 ###task 4
