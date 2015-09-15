@@ -53,6 +53,8 @@ MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
 MEMCACHE_SPEAKERS_KEY = "FEATURED_SPEAKERS"
 ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
                     'are nearly sold out: %s')
+MSG_TPL = 'Featured Speaker %s in %s.'
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 DEFAULTS = {
@@ -498,8 +500,9 @@ class ConferenceApi(remote.Service):
         data['key'] = session_key
 
         # check if session speaker has another session in this conference
-        sessions = Session.query(Session.speaker == request.speaker, ancestor=conf_key).get()
-        if sessions:
+        speaker_sesh = Session.query(Session.speaker == request.speaker,
+                                    ancestor=conf_key).get()
+        if speaker_sesh:
             # Yup, FEATURED SPEAKER! trigger task and end loop
             taskqueue.add(
                 url='/tasks/set_featured_speaker',
@@ -702,7 +705,6 @@ class ConferenceApi(remote.Service):
         sessions = q.filter(Session.speaker == speaker)
 
         # construct message string
-        MSG_TPL = 'Featured Speaker %s in %s ;'
         feature_msg = MSG_TPL % (
             speaker,
             ' and '.join(session.name for session in sessions))
